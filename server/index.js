@@ -3,6 +3,7 @@ import ChatRoute from "./Routes/ChatRoute.js";
 import MessageRoute from "./Routes/MessageRoute.js";
 import UserRoute from "./Routes/UserRoute.js"
 import bodyParser from "body-parser";
+import AllUserDataRoute from "./Routes/AllUserDataRoute.js";
 import mongoose from "mongoose";
 import cors from "cors"; 
 
@@ -21,6 +22,7 @@ app.use(bodyParser.urlencoded({ extended: true })); // Parse URL-encoded data
 app.use("/user", UserRoute)
 app.use("/chat", ChatRoute);
 app.use("/message", MessageRoute);
+app.use("/api", AllUserDataRoute);
 
 // MongoDB Connection
 mongoose.connect('mongodb://localhost:27017/', { 
