@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import "./chat.css"
 import { userChats } from '../api/ChatRequest'
+import { useSelector } from 'react-redux';
 import Conversation from '../components/Conversation'
 import ChatBox from '../components/ChatBox'
 import {io} from "socket.io-client"
@@ -9,11 +10,20 @@ import {io} from "socket.io-client"
 // import Home from "../assets/img/home.png";
 // import Noti from "../assets/img/noti.png";
 
-const Chat = () => {
+const Chat = ({currentUser}) => {
     const [chats, setChats] = useState([])
-    
+    // Using redux store
+    const selectedUser = useSelector((state) => state.user.selectedUser);
+    const user = selectedUser?._id; 
+    console.log("Redux user", user);
+
     // Current UserId
-    const user = "5f47a0d2c9b6c53d0f2d1b4d"
+    //const user = "5f47a0d2c9b6c53d0f2d1b4d"
+        if (!currentUser) {
+          return <div>Please select a user to chat with.</div>;
+        }
+
+    console.log("Current User", currentUser)
 
     const [currentChat, setCurrentChat] = useState(null);
     const [onlineUsers, setOnlineUsers] = useState([])
@@ -60,6 +70,13 @@ const Chat = () => {
 
         getChats()
     }, [user])
+
+    // Checking the online status
+    const checkOnlineStatus = (chat) => {
+    const chatMember = chat.members.find((member) => member !== user)
+    const online = onlineUsers.find((eachUser) => eachUser.userId === chatMember)
+    return online ? true : false
+    }
   return (
     <div className="Chat">
         {/* Left side */}
@@ -69,7 +86,11 @@ const Chat = () => {
                 <div className="Chat-list">
                     {chats.map((chat) => (
                         <div key={chat._id} onClick={() => setCurrentChat(chat)}>
-                            <Conversation data={chat} currentUserId={user} />
+                            <Conversation 
+                            data={chat} 
+                            currentUserId={user}
+                            online = {checkOnlineStatus(chat)}
+                            />
                         </div>
                     ))}
                 </div>

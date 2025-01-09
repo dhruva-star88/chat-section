@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import Chat from './Chat/Chat';
+import { useDispatch, useSelector } from 'react-redux';
+import { setSelectedUser } from './store/userSlice';  // Import the action
 import { getAllUsers } from './api/AllUsersRequest';
+import UserSelector from './components/UserSelector';
+import Chat from './Chat/Chat';
 
 const App = () => {
+  const dispatch = useDispatch();
+  const selectedUser = useSelector((state) => state.user.selectedUser);  // Accessing selected user from store
+
   const [users, setUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -19,22 +24,21 @@ const App = () => {
     fetchUsers();
   }, []);
 
-  const handleUserChange = (e) => {
-    setSelectedUser(e.target.value);
+  const handleUserChange = (userId) => {
+    const user = users.find((u) => u._id === userId);  // Find the user object by ID
+    console.log("user", user)
+    if (user) {
+      dispatch(setSelectedUser(user));  // Dispatch the user object to the store
+      console.log("Selected user", selectedUser)
+    }
   };
 
   return (
     <div>
       <h2>Select User</h2>
-      <select onChange={handleUserChange} value={selectedUser || ''}>
-        <option value="" disabled>Select User</option>
-        {users.map((user) => (
-          <option key={user._id} value={user._id}>
-            {user.username}
-          </option>
-        ))}
-      </select>
-
+      {!selectedUser && (
+        <UserSelector users={users} onUserChange={handleUserChange} />
+      )}
       {selectedUser && <Chat currentUser={selectedUser} />}
     </div>
   );

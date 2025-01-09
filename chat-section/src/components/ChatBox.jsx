@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { getUser } from '../api/UserRequest';
 import './chatbox.css';
 import { addMessage, getMessages } from '../api/MessageRequest';
@@ -9,6 +9,8 @@ const ChatBox = ({ chat, currentUser, setSendMessage, receiveMessage }) => {
     const [userData, setUserData] = useState(null);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
+    
+    const scroll = useRef()
 
     useEffect(() => {
         if (receiveMessage !== null && receiveMessage.chatId === chat?._id) {
@@ -77,6 +79,11 @@ const ChatBox = ({ chat, currentUser, setSendMessage, receiveMessage }) => {
         setSendMessage({ ...message, receiverId });
     };
 
+    // Always Scroll to the last Message
+    useEffect(() => {
+        scroll.current?.scrollIntoView({behaviour: "smooth"})
+    }, [messages])
+
     return (
         <div className="ChatBox-container">
             {chat ? (
@@ -91,8 +98,13 @@ const ChatBox = ({ chat, currentUser, setSendMessage, receiveMessage }) => {
                         <hr style={{ width: '85%', border: '0.1px solid rgb(213, 208, 208)' }} />
                     </div>
                     <div className="chat-body">
-                        {messages.map((message) => (
-                            <div key={message._id} className={message.senderId === currentUser ? "message own" : "message"}>
+                        {messages.map((message, index) => (
+                            <div 
+                            ref = {scroll}
+                            key={message._id || index} 
+                            className={message.senderId === currentUser 
+                            ? "message own" 
+                            : "message"}>
                                 <span>{message.text}</span>
                                 <span>{format(message.createdAt)}</span>
                             </div>
