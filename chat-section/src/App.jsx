@@ -22,6 +22,7 @@ const App = () => {
     };
 
     fetchUsers();
+    console.log("All users from APP", users)
   }, []);
 
   const handleUserChange = (userId) => {

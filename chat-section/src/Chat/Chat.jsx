@@ -5,13 +5,18 @@ import { useSelector } from 'react-redux';
 import Conversation from '../components/Conversation'
 import ChatBox from '../components/ChatBox'
 import {io} from "socket.io-client"
-// import { Link } from 'react-router-dom';
-// import { UilSetting } from '@iconscout/react-unicons';
-// import Home from "../assets/img/home.png";
-// import Noti from "../assets/img/noti.png";
+import { createChat } from '../api/ChatRequest';
+import { getAllUsers } from '../api/AllUsersRequest';
 
 const Chat = ({currentUser}) => {
     const [chats, setChats] = useState([])
+    const [users, setUsers] = useState([]); // State to store users
+    const [showUserList, setShowUserList] = useState(false); // Toggle user list
+    const [currentChat, setCurrentChat] = useState(null);
+    const [onlineUsers, setOnlineUsers] = useState([])
+    const [sendMessage, setSendMessage] = useState(null)
+    const [receiveMessage, setReceiveMessage] = useState(null)
+
     // Using redux store
     const selectedUser = useSelector((state) => state.user.selectedUser);
     const user = selectedUser?._id; 
@@ -25,10 +30,7 @@ const Chat = ({currentUser}) => {
 
     console.log("Current User", currentUser)
 
-    const [currentChat, setCurrentChat] = useState(null);
-    const [onlineUsers, setOnlineUsers] = useState([])
-    const [sendMessage, setSendMessage] = useState(null)
-    const [receiveMessage, setReceiveMessage] = useState(null)
+    
 
     const socket = useRef()
 
@@ -62,7 +64,7 @@ const Chat = ({currentUser}) => {
             try {
                 const {data} = await userChats(user)
                 setChats(data)
-                console.log(data)
+                console.log("Chats", data)
             } catch (error) {
                 console.log(error)
             }
@@ -71,18 +73,88 @@ const Chat = ({currentUser}) => {
         getChats()
     }, [user])
 
+     // Fetch all users to display in the user list
+     useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const response = await getAllUsers();
+                console.log('API Response:', response.data); // Check the response data
+                setUsers(response.data.filter((user) => user._id !== currentUser._id));
+            } catch (error) {
+                console.log('Error fetching users:', error);
+            }
+        };
+        fetchUsers();
+        console.log("All Users: ",users)
+    }, []);
+
     // Checking the online status
     const checkOnlineStatus = (chat) => {
     const chatMember = chat.members.find((member) => member !== user)
     const online = onlineUsers.find((eachUser) => eachUser.userId === chatMember)
     return online ? true : false
     }
+
+    // Create a new chat
+    const handleUserClick = async (selectedUser) => {
+        // Check if the current user and selected user are valid
+        if (!user || !selectedUser._id) {
+          console.log('Invalid user or selectedUser ID');
+          return;
+        }
+      
+        const existingChat = chats.find(
+          (chat) => chat.members.includes(user) && chat.members.includes(selectedUser._id)
+        );
+      
+        if (existingChat) {
+          setCurrentChat(existingChat);
+        } else {
+          try {
+            // Pass userId and selectedUser._id to the createChat function
+            console.log("Current user id while creating", user)
+            console.log("ReceiverId user id while creating", selectedUser._id)
+            const { data } = await createChat(user, selectedUser._id);
+            console.log('Chat created:', data); // Log chat data to verify
+            setChats([data, ...chats]);
+            setCurrentChat(data);
+          } catch (error) {
+            console.log('Error creating chat:', error);
+          }
+        }
+      };
+      
+    
   return (
     <div className="Chat">
         {/* Left side */}
         <div className="Left-side-chat">
             <div className="Chat-container">
-                <h2>Chats</h2>
+                <h2>Chats
+                <button
+              className="ml-2 p-2 bg-blue-500 text-white rounded-full"
+              onClick={() => setShowUserList(!showUserList)}
+            >
+              +
+            </button>
+
+                </h2>
+                {showUserList && (
+                        <div className="UserList absolute bg-white shadow-lg rounded-lg w-60 p-4 mt-2">
+                            <h3 className="text-lg font-semibold">Users:</h3>
+                            <ul className="space-y-2">
+                                {users.map((i) => (
+                                <li
+                                    key={i._id}
+                                    onClick={() => handleUserClick(i)}
+                                    className="cursor-pointer hover:bg-gray-200 p-2 rounded-md"
+                                >
+                                    {i.username}
+                                </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 <div className="Chat-list">
                     {chats.map((chat) => (
                         <div key={chat._id} onClick={() => setCurrentChat(chat)}>

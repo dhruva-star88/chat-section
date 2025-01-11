@@ -1,17 +1,28 @@
 import ChatModel from "../Models/ChatModel.js";
 
+// Backend (adjusting to match frontend request keys)
 export const createChat = async (req, res) => {
-  const newChat = new ChatModel({
-    members: [req.body.senderId, req.body.receiverId],
-  });
+  const { senderId, receiverId } = req.body;
+  console.log("Received senderId:", senderId);
+  console.log("Received receiverId:", receiverId);
+
+  if (!senderId || !receiverId) {
+    return res.status(400).send("Both senderId and receiverId are required.");
+  }
 
   try {
-    const result = await newChat.save();
-    res.status(200).json(result); // Send status and data in a single call
+    const newChat = new ChatModel({
+      members: [senderId, receiverId],
+    });
+
+    await newChat.save();
+    res.status(200).send(newChat);
   } catch (error) {
-    res.status(500).json(error); // Send status and error in a single call
+    console.log("Error creating chat:", error);
+    res.status(500).send("Error creating chat");
   }
 };
+
 
 export const userChats = async (req, res) => {
   try {
