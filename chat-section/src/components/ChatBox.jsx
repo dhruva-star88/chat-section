@@ -9,6 +9,7 @@ const ChatBox = ({ chat, currentUser, setSendMessage, receiveMessage }) => {
     const [userData, setUserData] = useState(null);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
+    const [selectedFile, setSelectedFile] = useState(null);
     
     const scroll = useRef()
 
@@ -53,30 +54,40 @@ const ChatBox = ({ chat, currentUser, setSendMessage, receiveMessage }) => {
         if (chat) fetchMessages();
     }, [chat]);
 
+    const handleSelectFiles = (e) => {
+        const file = e.target.files[0];  
+        setSelectedFile(file);
+        console.log("Selected File: ", file);
+    };
+
+
     const handleChange = (newMessage) => {
         setNewMessage(newMessage);
+        console.log("Message in typing: ",newMessage)
     };
 
     const handleSend = async (e) => {
         e.preventDefault();
-        const message = {
-            senderId: currentUser,
-            text: newMessage,
-            chatId: chat._id
-        };
 
-        // Sending Message to the Database
+        const formData = new FormData();
+        formData.append('senderId', currentUser);
+        formData.append('text', newMessage);
+        formData.append('chatId', chat._id);
+        if (selectedFile) {
+            formData.append('attachment', selectedFile);
+        }
+
         try {
-            const { data } = await addMessage(message);
+            const { data } = await addMessage(formData);
             setMessages((prevMessages) => [...prevMessages, data]);
             setNewMessage("");
+            setSelectedFile(null);
         } catch (error) {
             console.log(error);
         }
 
-        // Send Message to socket server
         const receiverId = chat.members.find((id) => id !== currentUser);
-        setSendMessage({ ...message, receiverId });
+        setSendMessage({ ...formData, receiverId });
     };
 
     // Always Scroll to the last Message
@@ -110,7 +121,10 @@ const ChatBox = ({ chat, currentUser, setSendMessage, receiveMessage }) => {
                             </div>
                         ))}
                         <div className="chat-sender">
-                            <div>+</div>
+                            <div className='file-upload-container'>
+                            <label htmlFor="fileInput">+</label>
+                            <input type="file" id="fileInput" onChange={handleSelectFiles}/>
+                            </div>
                             <InputEmoji value={newMessage} onChange={handleChange} />
                             <div className="send-button button" onClick={handleSend}>Send</div>
                         </div>
