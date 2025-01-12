@@ -2,13 +2,17 @@ import mongoose from "mongoose"
 
 const MessageSchema = mongoose.Schema({
     chatId:{
-        type:String
+        type:String,
     },
     senderId:{
-        type:String
+        type:String,
     },
     text:{
-        type:String
+        type:String,
+    },
+    attachment:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref: 'fs.files',
     }
 },
 {

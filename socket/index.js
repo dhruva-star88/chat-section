@@ -7,7 +7,6 @@ const io = require("socket.io")(8800, {
 let activeUsers = []
 
 //Switch on the server
-
 io.on("connection", (socket) => {
     // Registering the user on socket server
     socket.on('new-user-add', (newUserId) => {
